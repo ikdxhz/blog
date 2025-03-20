@@ -5,14 +5,12 @@ on:
     types: [opened, edited, labeled]
   workflow_dispatch:
     inputs:
-      title:
-        description: '文章标题'
-        required: true
-        default: '测试文章'
       content:
-        description: '文章内容'
+        description: '文章内容 (支持 Markdown 格式)'
         required: true
-        default: '这是一篇测试文章的内容。'
+        default: '# 文章标题
+
+这是文章的内容。第一行的标题会自动成为文章标题。'
 
 permissions:
   contents: write
@@ -46,9 +44,14 @@ jobs:
           
           let issue;
           if (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+            const content = process.env.INPUT_CONTENT || '# 测试文章\n\n这是一篇测试文章的内容。';
+            const titleMatch = content.match(/^#\s+(.+)$/m);
+            const title = titleMatch ? titleMatch[1] : '无标题文章';
+            const body = content.replace(/^#\s+.+\n/, '').trim();
+            
             issue = {
-              title: process.env.INPUT_TITLE || '测试文章',
-              body: process.env.INPUT_CONTENT || '这是一篇测试文章的内容。',
+              title: title,
+              body: body,
               created_at: new Date().toISOString()
             };
           } else {
@@ -58,7 +61,7 @@ jobs:
           const title = issue.title;
           const body = issue.body;
           const date = new Date(issue.created_at).toLocaleDateString('zh-CN');
-          const fileName = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const fileName = date.replace(/\//g, '') + '-' + title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
           
           // 将 Markdown 转换为 HTML
           const htmlContent = marked.parse(body);
@@ -198,7 +201,8 @@ jobs:
                   <p class="post-excerpt">${excerpt}</p>
               </article>`;
           
-          indexContent = indexContent.replace('<div class="create-post">', `${newPost}\n    <div class="create-post">`);
+          // 将新文章插入到最前面
+          indexContent = indexContent.replace('<main>', '<main>\n' + newPost);
           fs.writeFileSync('index.html', indexContent);
           EOF
           
@@ -206,7 +210,6 @@ jobs:
         env:
           ISSUE: ${{ toJSON(github.event.issue) }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          INPUT_TITLE: ${{ github.event.inputs.title }}
           INPUT_CONTENT: ${{ github.event.inputs.content }}
           
       - name: Commit changes
@@ -214,5 +217,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Add blog post from issue: ${{ github.event.issue.title }}" || echo "No changes to commit"
+          git commit -m "Add blog post: ${{ github.event.inputs.content || github.event.issue.title }}" || echo "No changes to commit"
           git push 
