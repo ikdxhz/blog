@@ -43,16 +43,43 @@ jobs:
               return [];
             }
             
-            // 清理所有现有文章
+            // 清理所有现有文章，除了今天创建的
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            const todayFileName = `post-${todayStr}.html`;
+            
             const files = fs.readdirSync(postsDir);
             files.forEach(file => {
-              if (file.endsWith('.html')) {
+              if (file.endsWith('.html') && file !== todayFileName) {
                 fs.unlinkSync(path.join(postsDir, file));
                 console.log(`已删除文章: ${file}`);
               }
             });
             
-            return [];
+            // 重新读取文章列表
+            return fs.readdirSync(postsDir)
+              .filter(file => file.endsWith('.html'))
+              .map(file => {
+                const content = fs.readFileSync(path.join(postsDir, file), 'utf8');
+                const titleMatch = content.match(/<h1>(.*?)<\/h1>/);
+                const dateMatch = content.match(/<div class="post-date">(.*?)<\/div>/);
+                const excerptMatch = content.match(/<div class="post-content">([\s\S]*?)<\/div>/);
+                
+                return {
+                  file,
+                  title: titleMatch ? titleMatch[1] : '无标题',
+                  date: dateMatch ? dateMatch[1] : '未知日期',
+                  excerpt: excerptMatch ? excerptMatch[1].split('\n')[0].substring(0, 200) : '',
+                  isPinned: content.includes('class="post pinned"')
+                };
+              })
+              .sort((a, b) => {
+                if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+                return new Date(b.date) - new Date(a.date);
+              });
           }
           
           // 创建新文章
