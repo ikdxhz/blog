@@ -4,6 +4,15 @@ on:
   issues:
     types: [opened, edited, labeled]
   workflow_dispatch:
+    inputs:
+      title:
+        description: '文章标题'
+        required: true
+        default: '测试文章'
+      content:
+        description: '文章内容'
+        required: true
+        default: '这是一篇测试文章的内容。'
 
 permissions:
   contents: write
@@ -35,10 +44,20 @@ jobs:
           const path = require('path');
           const marked = require('marked');
           
-          const issue = JSON.parse(process.env.ISSUE || '{}');
-          const title = issue.title || '测试文章';
-          const body = issue.body || '这是一个测试文章';
-          const date = issue.created_at ? new Date(issue.created_at).toLocaleDateString('zh-CN') : new Date().toLocaleDateString('zh-CN');
+          let issue;
+          if (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+            issue = {
+              title: process.env.INPUT_TITLE || '测试文章',
+              body: process.env.INPUT_CONTENT || '这是一篇测试文章的内容。',
+              created_at: new Date().toISOString()
+            };
+          } else {
+            issue = JSON.parse(process.env.ISSUE || '{"title":"测试文章","body":"这是一篇测试文章的内容。","created_at":"' + new Date().toISOString() + '"}');
+          }
+          
+          const title = issue.title;
+          const body = issue.body;
+          const date = new Date(issue.created_at).toLocaleDateString('zh-CN');
           const fileName = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
           
           // 将 Markdown 转换为 HTML
@@ -186,6 +205,9 @@ jobs:
           node .scripts/update-blog.js
         env:
           ISSUE: ${{ toJSON(github.event.issue) }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          INPUT_TITLE: ${{ github.event.inputs.title }}
+          INPUT_CONTENT: ${{ github.event.inputs.content }}
           
       - name: Commit changes
         run: |
