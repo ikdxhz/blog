@@ -265,18 +265,41 @@ jobs:
           }
           
           // 主逻辑
+          let newFileName = null;
+          
           if (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
             // 创建新文章
-            const newFileName = createNewPost();
+            newFileName = createNewPost();
             console.log(`新文章已创建: ${newFileName}`);
           } else if (process.env.GITHUB_EVENT_NAME === 'issues') {
             // 从Issue创建文章
-            const newFileName = createNewPost();
+            newFileName = createNewPost();
             console.log(`从Issue创建文章: ${newFileName}`);
           }
           
           // 重新整理所有文章
           const posts = getAllPosts();
+          
+          // 如果没有找到文章但我们刚刚创建了一个，手动添加它
+          if (posts.length === 0 && newFileName) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            // 从环境变量获取Issue内容
+            const issueTitle = process.env.ISSUE_TITLE || dateStr + ' 记录';
+            
+            posts.push({
+              file: newFileName,
+              title: issueTitle,
+              date: dateStr,
+              excerpt: '今天是 ' + dateStr,
+              isPinned: false
+            });
+          }
+          
           updateIndex(posts);
           console.log(`已更新 ${posts.length} 篇文章`);
           EOL
