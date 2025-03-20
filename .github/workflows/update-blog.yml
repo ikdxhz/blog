@@ -3,6 +3,7 @@ name: Update Blog from Issues
 on:
   issues:
     types: [opened, edited, labeled]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,15 +12,15 @@ permissions:
 jobs:
   update-blog:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'blog-post')
+    if: contains(github.event.issue.labels.*.name, 'blog-post') || github.event_name == 'workflow_dispatch'
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '16'
           
@@ -34,10 +35,10 @@ jobs:
           const path = require('path');
           const marked = require('marked');
           
-          const issue = JSON.parse(process.env.ISSUE);
-          const title = issue.title;
-          const body = issue.body;
-          const date = new Date(issue.created_at).toLocaleDateString('zh-CN');
+          const issue = JSON.parse(process.env.ISSUE || '{}');
+          const title = issue.title || '测试文章';
+          const body = issue.body || '这是一个测试文章';
+          const date = issue.created_at ? new Date(issue.created_at).toLocaleDateString('zh-CN') : new Date().toLocaleDateString('zh-CN');
           const fileName = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
           
           // 将 Markdown 转换为 HTML
@@ -191,5 +192,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Add blog post from issue: ${{ github.event.issue.title }}"
+          git commit -m "Add blog post from issue: ${{ github.event.issue.title }}" || echo "No changes to commit"
           git push 
