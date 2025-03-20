@@ -38,6 +38,22 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            position: relative;
+        }
+        .post.pinned {
+            border: 2px solid #42b983;
+            background-color: #f8fff8;
+        }
+        .post.pinned::before {
+            content: "📌 置顶";
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #42b983;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
         }
         .post:hover {
             transform: translateY(-2px);
@@ -106,6 +122,11 @@
             .github-corner {
                 display: none;
             }
+            .post.pinned::before {
+                font-size: 0.7em;
+                top: -10px;
+                right: 10px;
+            }
         }
     </style>
 </head>
@@ -125,22 +146,12 @@
     </header>
 
     <main>
-
-    <article class="post">
-        <h2><a href="posts/2025320-.html" class="post-title">文章标题这是文章的内容。第一行的标题会自动成为文章标题。</a></h2>
-        <div class="post-date">2025/3/20</div>
-        <p class="post-excerpt"># 文章标题这是文章的内容。第一行的标题会自动成为文章标题。</p>
-    </article>
+        <div class="no-posts">
+            还没有博客文章，创建一个新的文章开始写作吧！
+        </div>
         
-        
-        
-    <article class="post">
-        <h2><a href="posts/.html" class="post-title">测试文章</a></h2>
-        <div class="post-date">2025/3/20</div>
-        <p class="post-excerpt">这是一篇测试文章的内容。</p>
-    </article>
-    <div class="create-post">
-            <a href="https://github.com/ikdxhz/blog/issues/new" target="_blank">
+        <div class="create-post">
+            <a href="https://github.com/ikdxhz/blog/actions/workflows/update-blog.yml" target="_blank">
                 ✍️ 写新文章
             </a>
         </div>
