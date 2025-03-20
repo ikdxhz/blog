@@ -264,5 +264,5 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add .
-          git commi
+          git add -A
+          git commit -m "更新博客" || echo "No changes to commit"
