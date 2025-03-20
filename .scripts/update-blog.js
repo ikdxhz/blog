@@ -11,7 +11,7 @@ function getAllPosts() {
   }
   
   return fs.readdirSync(postsDir)
-    .filter(file => file.endsWith('.html'))
+    .filter(file => file.endsWith('.html') && file !== '.html')
     .map(file => {
       const content = fs.readFileSync(path.join(postsDir, file), 'utf8');
       const titleMatch = content.match(/<h1>(.*?)<\/h1>/);
@@ -44,7 +44,7 @@ function createNewPost() {
   const title = dateStr + ' 记录';
   const body = '今天是 ' + dateStr + '，现在是 ' + timeStr + '。';
   
-  const fileName = dateStr + '-记录.html';
+  const fileName = `post-${dateStr}.html`;
   const htmlContent = marked.parse(body);
   
   const postContent = `<!DOCTYPE html>
