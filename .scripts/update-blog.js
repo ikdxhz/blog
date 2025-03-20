@@ -35,13 +35,16 @@ function getAllPosts() {
 // 创建新文章
 function createNewPost() {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('zh-CN');
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
   const timeStr = now.toLocaleTimeString('zh-CN');
   
   const title = dateStr + ' 记录';
   const body = '今天是 ' + dateStr + '，现在是 ' + timeStr + '。';
   
-  const fileName = dateStr.replace(/\//g, '') + '-记录.html';
+  const fileName = dateStr + '-记录.html';
   const htmlContent = marked.parse(body);
   
   const postContent = `<!DOCTYPE html>
