@@ -48,6 +48,7 @@ jobs:
             files.forEach(file => {
               if (file.endsWith('.html')) {
                 fs.unlinkSync(path.join(postsDir, file));
+                console.log(`已删除文章: ${file}`);
               }
             });
             
@@ -257,5 +258,4 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Blog update: $(date '+%Y-%m-%d')" || echo "No changes to commit"
-          git push 
+          git commi
