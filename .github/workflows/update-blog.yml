@@ -43,26 +43,15 @@ jobs:
               return [];
             }
             
-            return fs.readdirSync(postsDir)
-              .filter(file => file.endsWith('.html') && file !== '.html')
-              .map(file => {
-                const content = fs.readFileSync(path.join(postsDir, file), 'utf8');
-                const titleMatch = content.match(/<h1>(.*?)<\/h1>/);
-                const dateMatch = content.match(/<div class="post-date">(.*?)<\/div>/);
-                const excerptMatch = content.match(/<div class="post-content">([\s\S]*?)<\/div>/);
-                
-                return {
-                  file,
-                  title: titleMatch ? titleMatch[1] : '无标题',
-                  date: dateMatch ? dateMatch[1] : '未知日期',
-                  excerpt: excerptMatch ? excerptMatch[1].split('\n')[0].substring(0, 200) : '',
-                  isPinned: content.includes('class="post pinned"')
-                };
-              })
-              .sort((a, b) => {
-                if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-                return new Date(b.date) - new Date(a.date);
-              });
+            // 清理所有现有文章
+            const files = fs.readdirSync(postsDir);
+            files.forEach(file => {
+              if (file.endsWith('.html')) {
+                fs.unlinkSync(path.join(postsDir, file));
+              }
+            });
+            
+            return [];
           }
           
           // 创建新文章
