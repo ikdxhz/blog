@@ -3,6 +3,7 @@ name: 📝 写新文章
 on:
   issues:
     types: [opened, edited, labeled, unlabeled, deleted]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,7 +12,7 @@ permissions:
 jobs:
   update-blog:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'blog-post')
+    if: contains(github.event.issue.labels.*.name, 'blog-post') || github.event_name == 'workflow_dispatch'
     
     steps:
       - uses: actions/checkout@v3
@@ -64,27 +65,19 @@ jobs:
               });
           }
           
-          // 从 Issue 创建文章
-          function createPostFromIssue() {
-            const issue = JSON.parse(process.env.ISSUE || '{}');
-            if (!issue.number) return null;
+          // 创建新文章
+          function createNewPost() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            const timeStr = now.toLocaleTimeString('zh-CN');
             
-            // 如果是删除 Issue 或移除标签，则删除对应的文章
-            if (process.env.GITHUB_EVENT_NAME === 'issues' && 
-                (process.env.GITHUB_ACTION === 'deleted' || 
-                 (process.env.GITHUB_ACTION === 'unlabeled' && process.env.GITHUB_LABEL === 'blog-post'))) {
-              const fileName = `issue-${issue.number}.html`;
-              const filePath = path.join('posts', fileName);
-              if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                return null;
-              }
-            }
+            const title = dateStr + ' 记录';
+            const body = '今天是 ' + dateStr + '，现在是 ' + timeStr + '。';
             
-            const title = issue.title;
-            const body = issue.body || '';
-            const date = new Date(issue.created_at).toLocaleDateString('zh-CN');
-            const fileName = `issue-${issue.number}.html`;
+            const fileName = dateStr + '-记录.html';
             const htmlContent = marked.parse(body);
             
             const postContent = `<!DOCTYPE html>
@@ -189,7 +182,7 @@ jobs:
                 <article>
                     <header>
                         <h1>${title}</h1>
-                        <div class="post-date">${date}</div>
+                        <div class="post-date">${dateStr}</div>
                     </header>
             
                     <div class="post-content">
@@ -232,7 +225,7 @@ jobs:
                   </div>
                   
                   <div class="create-post">
-                      <a href="https://github.com/ikdxhz/blog/issues/new" target="_blank">
+                      <a href="https://github.com/ikdxhz/blog/actions/workflows/update-blog.yml" target="_blank">
                           ✍️ 写新文章
                       </a>
                   </div>
@@ -243,7 +236,7 @@ jobs:
                   ${postsHtml}
                   
                   <div class="create-post">
-                      <a href="https://github.com/ikdxhz/blog/issues/new" target="_blank">
+                      <a href="https://github.com/ikdxhz/blog/actions/workflows/update-blog.yml" target="_blank">
                           ✍️ 写新文章
                       </a>
                   </div>
@@ -254,8 +247,9 @@ jobs:
           }
           
           // 主逻辑
-          const newFileName = createPostFromIssue();
-          if (newFileName) {
+          if (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+            // 创建新文章
+            const newFileName = createNewPost();
             console.log(`新文章已创建: ${newFileName}`);
           }
           
@@ -268,14 +262,11 @@ jobs:
           node .scripts/update-blog.js
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_ACTION: ${{ github.event.action }}
-          GITHUB_LABEL: ${{ github.event.label.name }}
-          ISSUE: ${{ toJSON(github.event.issue) }}
           
       - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Blog update: Issue #${{ github.event.issue.number }}" || echo "No changes to commit"
+          git commit -m "Blog update: $(date '+%Y-%m-%d')" || echo "No changes to commit"
           git push 
