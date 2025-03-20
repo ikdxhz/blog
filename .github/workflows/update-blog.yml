@@ -1,4 +1,4 @@
-name: Update Blog from Issues
+name: 📝 写新文章
 
 on:
   issues:
