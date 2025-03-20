@@ -72,18 +72,7 @@ jobs:
             const timeStr = now.toLocaleTimeString('zh-CN');
             
             const title = \`\${dateStr} 记录\`;
-            const body = \`今天是 \${dateStr}，现在是 \${timeStr}。
-
-## 今日心情
-写下你的心情...
-
-## 今日计划
-- [ ] 计划 1
-- [ ] 计划 2
-- [ ] 计划 3
-
-## 今日总结
-今天过得怎么样？\`;
+            const body = \`今天是 \${dateStr}，现在是 \${timeStr}。\`;
             
             const fileName = dateStr.replace(/\//g, '') + '-记录.html';
             const htmlContent = marked.parse(body);
